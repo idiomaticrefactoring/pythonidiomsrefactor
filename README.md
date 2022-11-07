@@ -4,7 +4,10 @@
 For command line use, the package is installed with 
 
     python3 -m pip install RefactoringIdioms
+    
+We develop a PyCharm plugin called RIdiom, you can install and try the plugin with
 
+   https://plugins.jetbrains.com/plugin/20107-ridiom
  ## Running:
 1).  Default command is to get <non-idiomatic code, idiomatic code> pairs for all Python files in the current directory for all Python idioms, and the result is saved in result.json in the current directory: 
 	
