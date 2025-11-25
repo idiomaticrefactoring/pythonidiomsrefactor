@@ -1,274 +1,282 @@
-import argparse,os,sys
-abs_path=os.path.abspath(os.path.dirname(__file__))
-# print("abs_path_1: ",abs_path)
-pack_path="/".join(abs_path.split("/")[:-1])
-# print(pack_path)
-# sys.path.append(pack_path)
-sys.path.append("/".join(abs_path.split("/")[:-1]))
-# sys.path.append("/".join(abs_path.split("/")[:-2]))
-from RefactoringIdioms.extract_transform_complicate_code_new import \
-    transform_for_else_compli_to_simple_improve_copy_result_csv, extract_compli_var_unpack_for_target_improve_new, \
-    extract_compli_multiple_assign_code_improve_complete_improve
-from RefactoringIdioms.extract_transform_complicate_code_new.comprehension import \
-    extract_compli_for_comprehension_only_one_stmt_improve, extract_compli_for_comprehension_dict_only_one_stmt_new, \
-    extract_compli_for_comprehension_set_only_one_stmt
-from RefactoringIdioms.extract_transform_complicate_code_new import extract_compli_var_unpack_star_call_improve, \
-    extract_compli_truth_value_test_code_remove_is_isnot, transform_chained_comparison_compli_to_simple
-import util
-import CodeInfo
-# This is a sample Python script.
+import argparse
+import os
+import sys
+import toml
+import fnmatch
+from typing import List, Dict, Callable, Any, Tuple
 
-# Press ⌃R to execute it or replace it with your code.
-# Press Double ⇧ to search everywhere for classes, files, tool windows, actions, and settings.
-def save_output(outputpath):
-    result=dict()
-    util.save_file_path(outputpath,result)
-def format_code_list(filepath,code_pair_list,outputpath):
-    format_code_list=[]
-    print(f"************Result Summary of {filepath.split('/')[-1]}************")
-    for  ind_idiom,(idiom,cl, me, oldcode, new_code,lineno_list) in enumerate(code_pair_list):
-        code_info_cla = CodeInfo.CodeInfo(filepath, idiom,cl, me, oldcode, new_code,lineno_list)
-        # print(code_info_cla.__dict__)
-        print(f">>>Result{ind_idiom+1}",code_info_cla.full_info())
-        format_code_list.append(code_info_cla.__dict__)
-    print(f"************Result of {filepath.split('/')[-1]} End************")
-    return format_code_list
-    # return code_dict
-def get_list_comprehension(code_frag):
-    print(">>>>>>>>>Checking List Comprehension")
-    code_pair_list = extract_compli_for_comprehension_only_one_stmt_improve.get_list_compreh(code_frag)
-    for e in code_pair_list:
-        e.insert(0, "List Comprehension")
-    return code_pair_list
+# ==========================================
+# 0. 环境设置与依赖导入
+# ==========================================
+abs_path = os.path.abspath(os.path.dirname(__file__))
+package_path = "/".join(abs_path.split("/")[:-1])
+sys.path.append(package_path)
 
-def get_set_comprehension(code_frag):
-    print(">>>>>>>>>Checking Set Comprehension")
-    code_pair_list = extract_compli_for_comprehension_set_only_one_stmt.get_set_compreh(code_frag)
+import RefactoringIdioms.util as util
+import RefactoringIdioms.CodeInfo as CodeInfo
 
-    for e in code_pair_list:
-        e.insert(0, "Set Comprehension")
-    return code_pair_list
-def get_dict_comprehension(code_frag):
-    print(">>>>>>>>>Checking Dict Comprehension")
+# 导入具体的重构逻辑模块
+from RefactoringIdioms.extract_transform_complicate_code_new import (
+    transform_for_else_compli_to_simple_improve_copy_result_csv as for_else_mod,
+    extract_compli_var_unpack_for_target_improve_new as for_multi_target_mod,
+    extract_compli_multiple_assign_code_improve_complete_improve as assign_multi_mod,
+    extract_compli_var_unpack_star_call_improve as star_call_mod,
+    extract_compli_truth_value_test_code_remove_is_isnot as truth_value_mod,
+    transform_chained_comparison_compli_to_simple as chain_compare_mod
+)
+from RefactoringIdioms.extract_transform_complicate_code_new.comprehension import (
+    extract_compli_for_comprehension_only_one_stmt_improve as list_comp_mod,
+    extract_compli_for_comprehension_dict_only_one_stmt_new as dict_comp_mod,
+    extract_compli_for_comprehension_set_only_one_stmt as set_comp_mod
+)
 
-    code_pair_list = extract_compli_for_comprehension_dict_only_one_stmt_new.get_dict_compreh(code_frag)
-    for e in code_pair_list:
-        e.insert(0, "Dict Comprehension")
-    return code_pair_list
-def get_chain_compare(code_frag):
-    print(">>>>>>>>>Checking Chain Comparison")
-    code_pair_list_chain_compare = transform_chained_comparison_compli_to_simple.get_chain_compare(code_frag)
-    # code_pair_list.extend([e.insert(0,"Chain Compare") for e in code_pair_list_chain_compare])
-    for e in code_pair_list_chain_compare:
-        e.insert(0, "Chain Compare")
-    return code_pair_list_chain_compare
+# ==========================================
+# 1. 辅助函数 (Helpers)
+# ==========================================
 
-def get_truth_value_test(code_frag):
-    print(">>>>>>>>>Checking Truth Value Test")
-    code_pair_list_truth_value = extract_compli_truth_value_test_code_remove_is_isnot.get_truth_value_test_code(
-        code_frag)
-    # code_pair_list.extend([e.insert(0,"Truth Value Test") for e in code_pair_list_truth_value])
-    for e in code_pair_list_truth_value:
-        e.insert(0, "Truth Value Test")
-    return code_pair_list_truth_value
+def load_config(config_path="ridiom.toml"):
+    """加载 TOML 配置文件"""
+    if os.path.exists(config_path):
+        try:
+            return toml.load(config_path)
+        except Exception as e:
+            print(f"Error loading config file {config_path}: {e}")
+    return {}
 
+def check_noqa(file_lines: List[str], lineno_list: List[List[int]]) -> bool:
+    """
+    检查指定行号范围内是否存在 '# noqa' 注释。
+    """
+    if not file_lines:
+        return False
+        
+    for start, end in lineno_list:
+        # lineno 是 1-based，列表索引是 0-based
+        # 使用 max/min 防止行号越界
+        start_idx = max(0, start - 1)
+        end_idx = min(len(file_lines), end)
+        
+        for i in range(start_idx, end_idx):
+            if "# noqa" in file_lines[i]:
+                return True
+    return False
 
-def get_ass_multi_targets(code_frag):
-    print(">>>>>>>>>Checking Assign Multiple Targets")
+def get_target_files(base_paths: List[str], exclude_patterns: List[str]) -> List[str]:
+    """
+    根据 include (base_paths) 和 exclude 模式扫描所有 .py 文件
+    """
+    target_files = []
+    
+    for base_path in base_paths:
+        if base_path == ".":
+            base_path = os.getcwd()
+            
+        if os.path.isfile(base_path):
+            target_files.append(base_path)
+            continue
 
-    code_pair_list_assign_multi_targets = extract_compli_multiple_assign_code_improve_complete_improve.transform_multiple_assign_code(
-        code_frag)
-    # code_pair_list.extend([e.insert(0,"Assign Multi Targets") for e in code_pair_list_assign_multi_targets])
-    for e in code_pair_list_assign_multi_targets:
-        e.insert(0, "Assign Multi Targets")
-    return code_pair_list_assign_multi_targets
+        for root, dirs, files in os.walk(base_path):
+            # 过滤目录
+            dirs[:] = [d for d in dirs if not any(fnmatch.fnmatch(d, pat) for pat in exclude_patterns)]
+            
+            for file in files:
+                if not file.endswith(".py"):
+                    continue
+                
+                filepath = os.path.join(root, file)
+                relpath = os.path.relpath(filepath, os.getcwd())
+                
+                # 过滤文件
+                if any(fnmatch.fnmatch(relpath, pat) or fnmatch.fnmatch(file, pat) for pat in exclude_patterns):
+                    continue
+                
+                target_files.append(filepath)
+                
+    return target_files
 
+# ==========================================
+# 2. 规则映射与装饰器 (Rule Mapping)
+# ==========================================
 
-def get_for_multi_targets(code_frag):
-    print(">>>>>>>>>Checking For Multiple Targets")
+def wrap_idiom_func(func, name):
+    """
+    闭包装饰器：
+    1. 统一调用接口，支持传入配置
+    2. 自动插入 Idiom 名称
+    注意：这里不再处理 noqa，只负责运行和格式化。
+    """
+    def wrapper(code_frag, config: Dict[str, Any] = None):
+        print(f">>> Checking {name}...")
+        
+        # 尝试将细粒度配置 (config) 传递给底层函数
+        try:
+            if config is not None:
+                results = func(code_frag, config=config)
+            else:
+                results = func(code_frag)
+        except TypeError:
+            # 兼容旧接口：不传 config
+            results = func(code_frag)
+            
+        # 统一处理结果格式，确保第一项是 Idiom 名称
+        if results:
+            for item in results:
+                if item and item[0] != name:
+                    item.insert(0, name)
+        return results
+    return wrapper
 
-    code_pair_list_for_multi_target = extract_compli_var_unpack_for_target_improve_new.transform_for_multiple_targets_code(
-        code_frag)
-    # code_pair_list.extend([e.insert(0,"For Multi Targets") for e in code_pair_list_for_multi_target])
-    for e in code_pair_list_for_multi_target:
-        e.insert(0, "For Multi Targets")
-    return code_pair_list_for_multi_target
+# 核心映射表
+IDIOM_MAPPING: Dict[str, List[Callable]] = {
+    "list-comprehension": [wrap_idiom_func(list_comp_mod.get_list_compreh, "List Comprehension")],
+    "set-comprehension": [wrap_idiom_func(set_comp_mod.get_set_compreh, "Set Comprehension")],
+    "dict-comprehension": [wrap_idiom_func(dict_comp_mod.get_dict_compreh, "Dict Comprehension")],
+    "chain-comparison": [wrap_idiom_func(chain_compare_mod.get_chain_compare, "Chain Compare")],
+    "truth-value-test": [wrap_idiom_func(truth_value_mod.get_truth_value_test_code, "Truth Value Test")],
+    "for-else": [wrap_idiom_func(for_else_mod.transform_for_else_code, "For Else")],
+    "assign-multiple-targets": [wrap_idiom_func(assign_multi_mod.transform_multiple_assign_code, "Assign Multi Targets")],
+    "star-in-func-call": [wrap_idiom_func(star_call_mod.transform_star_call_code, "Call Star")],
+    "for-multiple-targets": [wrap_idiom_func(for_multi_target_mod.transform_for_multiple_targets_code, "For Multi Targets")]
+}
 
+# ==========================================
+# 3. 处理逻辑 (Core Logic)
+# ==========================================
 
-def get_for_else(code_frag):
-    print(">>>>>>>>>Checking For Else")
+def process_single_file(
+    filepath: str, 
+    active_rules_map: Dict[str, List[Callable]], 
+    tool_config: Dict, 
+    output_list: List
+):
+    """
+    对单个文件运行所有激活的重构规则，并在此处显式处理 noqa 过滤
+    """
+    print(f"************ Processing {filepath.split('/')[-1]} ************")
+    
+    # 1. 加载 AST (用于分析)
+    try:
+        code_frag = util.load_file_path(file_path=filepath)
+    except Exception as e:
+        print(f"Failed to load AST for {filepath}: {e}")
+        return
 
-    code_pair_listfor_else = transform_for_else_compli_to_simple_improve_copy_result_csv.transform_for_else_code(
-        code_frag)
-    for e in code_pair_listfor_else:
-        e.insert(0, "For Else")
-        # code_pair_list.append(e)
-    return code_pair_listfor_else
+    # 2. 读取源码行 (用于 noqa 检查)
+    file_lines = []
+    enable_noqa = tool_config.get("enable-noqa", True)
+    if enable_noqa:
+        try:
+            with open(filepath, 'r', encoding='utf-8') as f:
+                file_lines = f.readlines()
+        except Exception:
+            pass  # 读取源码失败则无法进行过滤，默认视为通过
 
+    file_results = []
+    rules_config = tool_config.get("rules", {})
 
-def get_star_call(code_frag):
-    # code_pair_list.extend([e.insert(0,"For Else") for e in code_pair_listfor_else])
-    print(">>>>>>>>>Checking Star in Function Call")
+    # 3. 遍历规则并执行
+    for rule_name, func_list in active_rules_map.items():
+        # 获取该规则在配置文件中的细粒度配置
+        specific_config = rules_config.get(rule_name, {})
+        
+        for func in func_list:
+            try:
+                # 传入配置参数运行检测
+                results = func(code_frag, config=specific_config)
+                
+                if results:
+                    # 如果启用了 noqa，过滤掉包含禁止注释的结果
+                    if enable_noqa and file_lines:
+                        valid_results = []
+                        for res in results:
+                            # 结果解包: [Idiom, cl, me, old, new, lineno_list]
+                            # lineno_list 通常在最后
+                            *_, lineno_list = res
+                            
+                            # 只有当该范围内没有 noqa 时才保留
+                            if not check_noqa(file_lines, lineno_list):
+                                valid_results.append(res)
+                        file_results.extend(valid_results)
+                    else:
+                        # 没启用 noqa 或没读到源码，直接保留所有结果
+                        file_results.extend(results)
+                        
+            except Exception as e:
+                print(f"Error executing rule '{rule_name}' on {filepath}: {e}")
 
-    code_pair_list_call_star = extract_compli_var_unpack_star_call_improve.transform_star_call_code(
-        code_frag)
-    for e in code_pair_list_call_star:
-        e.insert(0, "Call Star")
-        # code_pair_list.append(e)
-    return code_pair_list_call_star
+    # 4. 格式化并输出
+    if file_results:
+        print(f"************ Result Summary of {filepath.split('/')[-1]} ************")
+        for ind, res in enumerate(file_results):
+            idiom, cl, me, oldcode, new_code, *rest = res
+            lineno_list = rest[0] if rest else []
+            
+            # 使用关键字参数构造 CodeInfo
+            code_info = CodeInfo.CodeInfo(
+                file_path=filepath, 
+                idiom=idiom, 
+                class_name=cl, 
+                method_name=me, 
+                complicated_code=oldcode, 
+                simple_code=new_code, 
+                lineno=lineno_list
+            )
+            print(f">>> Result {ind+1} \n{code_info.full_info()}")
+            output_list.append(code_info.__dict__)
+        print(f"************ End of {filepath.split('/')[-1]} ************\n")
 
-def get_refactoring(idiom,filepath,outputpath):
-    print(f"************For File {filepath.split('/')[-1]}, begin to find refactorable non-idiomatic code with Python idioms************")
+# ==========================================
+# 4. 主程序入口
+# ==========================================
 
-
-    code_frag=util.load_file_path(file_path=filepath)
-    if idiom == 'List Comprehension':
-        code_pair_list = get_list_comprehension(code_frag)
-        if code_pair_list:
-            pass
-            # print("code_list: ",code_pair_list,jsonify(code_pair_list).json[0][0])
-
-        # return jsonify(code_pair_list)
-
-        pass
-    elif idiom == 'Set Comprehension':
-
-        code_pair_list = get_set_comprehension(code_frag)
-        if code_pair_list:
-            pass
-            # print("code_list: ", code_pair_list, jsonify(code_pair_list).json[0][0])
-
-        # return jsonify(code_pair_list)
-        pass
-    elif idiom == 'Dict Comprehension':
-
-        code_pair_list = get_dict_comprehension(code_frag)
-        # return jsonify(code_pair_list)
-        pass
-    elif idiom == 'Chain Comparison':
-
-        code_pair_list =get_chain_compare(code_frag)
-        # return jsonify(code_pair_list)
-        pass
-    elif idiom == 'Truth Value Test':
-
-        code_pair_list = get_truth_value_test(code_frag)
-        # return jsonify(code_pair_list)
-        pass
-    elif idiom == 'Assign Multiple Targets':
-
-        code_pair_list = get_ass_multi_targets(
-            code_frag)
-        # return jsonify(code_pair_list)
-        pass
-    elif idiom == 'For Multiple Targets':
-
-        code_pair_list = get_for_multi_targets(
-            code_frag)
-        # return jsonify(code_pair_list)
-        pass
-    elif idiom == 'For Else':
-
-        code_pair_list = get_for_else(
-            code_frag)
-        # return jsonify(code_pair_list)
-        pass
-    elif idiom == 'Star in Call':
-
-        code_pair_list = get_star_call(
-            code_frag)
-        # return jsonify(code_pair_list)
-
-        pass
-    elif idiom == 'All':
-        # idioms = ['All','List Comprehension', 'Set Comprehension', 'Dict Comprehension','Chain Comparison',
-        # 'Truth Value Test','Assign Multiple Targets','For Multiple Targets','For Else'
-        # ,'Star in Call']
-        code_pair_list = []
-        # print("code_frag")
-        # print(code_frag)
-        code_pair_list_compre = get_list_comprehension(code_frag)
-        code_pair_list.extend(code_pair_list_compre)
-
-        code_pair_set_compre=get_set_comprehension(code_frag)
-        code_pair_list.extend(code_pair_set_compre)
-
-        code_pair_dict_compre=get_dict_comprehension(code_frag)
-        code_pair_list.extend(code_pair_dict_compre)
-
-        code_pair_chain_compare = get_chain_compare(code_frag)
-        code_pair_list.extend(code_pair_chain_compare)
-
-        code_pair_truth_test = get_truth_value_test(code_frag)
-        code_pair_list.extend(code_pair_truth_test)
-
-        code_pair_multi_ass = get_ass_multi_targets(code_frag)
-        code_pair_list.extend(code_pair_multi_ass)
-
-        code_pair_for_multi_target=get_for_multi_targets(code_frag)
-        code_pair_list.extend(code_pair_for_multi_target)
-
-        code_pair_for_else = get_for_else(code_frag)
-        code_pair_list.extend(code_pair_for_else)
-
-        code_pair_star_call = get_star_call(code_frag)
-        code_pair_list.extend(code_pair_star_call)
-
-
-    # print(code_pair_list)
-    new_code_list=format_code_list(filepath, code_pair_list,outputpath)
-    return new_code_list
-# Press the green button in the gutter to run the script.
-def main(args):
-    # args = parser.parse_args()
-    filepath = args.filepath
-    idiom = args.idiom
-    outputpath = args.outputpath
-    format_code_list=[]
-    a = []
-    for i in range(1):
-        a.append(i)
-    # envname = args.envname
-    if os.path.isdir(filepath):
-        for path,dir_list,file_list in os.walk(filepath):
-            for file_name in file_list:
-                abs_path=os.path.join(path,file_name)
-                if abs_path.endswith(".py"):
-                    each_file_code_list=get_refactoring(idiom, abs_path, outputpath)
-                    format_code_list.extend(each_file_code_list)
-    else:
-        format_code_list=get_refactoring(idiom, filepath, outputpath)
-    print(f"************Result is saved in {outputpath}************", )
-    util.save_json_file_path(outputpath, format_code_list)
-    # print(args)
-    # print("main.py main() finished!")
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='RefactoringIdioms')
-    parser.add_argument('--envname', type=str,
-                        help='envname', default="CartPole-v0")
-    parser.add_argument('--filepath', type=str,
-                        help='filepath', default=abs_path+"/file.py")
-    parser.add_argument('--idiom', type=str,
-                        help='idiom', default="All")
-    parser.add_argument('--outputpath', type=str,
-                        help='outputpath', default="result.json")
-
+def main():
+    parser = argparse.ArgumentParser(description='RefactoringIdioms: Detect and refactor non-idiomatic Python code.')
+    parser.add_argument('--config', type=str, default='ridiom.toml', help='Path to ridiom.toml config file')
+    parser.add_argument('--filepath', type=str, help='Override target path (file or directory)')
+    parser.add_argument('--outputpath', type=str, default='result.json', help='Output JSON file path')
     args = parser.parse_args()
-    print(args)
-    main(args)
-    filepath = args.filepath
-    idiom = args.idiom
-    outputpath = args.outputpath
 
-    a=[]
-    for i in range(1):
-        a.append(i)
-    # envname = args.envname
-    # get_refactoring(idiom,filepath,outputpath)
-    print(args)
-    print("finished!")
-    #    envname='MountainCar-v0'
-    # env = gym.make(envname)
-    # print_hi('PyCharm')
+    # --- 加载配置 ---
+    config = load_config(args.config)
+    tool_conf = config.get("tool", {}).get("ridiom", {})
+    rules_conf = tool_conf.get("rules", {})
 
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
+    # --- 扫描文件 ---
+    include_paths = [args.filepath] if args.filepath else tool_conf.get("include", ["."])
+    exclude_patterns = tool_conf.get("exclude", [])
+    target_files = get_target_files(include_paths, exclude_patterns)
+    print(f"Found {len(target_files)} python files to analyze.")
+
+    # --- 激活规则 ---
+    select_rules = rules_conf.get("select", [])
+    ignore_rules = rules_conf.get("ignore", [])
+    active_rules_map = {}
+    
+    if not select_rules or "All" in select_rules:
+        candidate_keys = IDIOM_MAPPING.keys()
+    else:
+        candidate_keys = select_rules
+
+    for key in candidate_keys:
+        if key in ignore_rules:
+            continue
+        if key in IDIOM_MAPPING:
+            active_rules_map[key] = IDIOM_MAPPING[key]
+        else:
+            print(f"Warning: Unknown rule '{key}' in configuration.")
+
+    if not active_rules_map:
+        print("No active rules selected. Exiting.")
+        return
+
+    # --- 执行分析 ---
+    all_results = []
+    for filepath in target_files:
+        process_single_file(filepath, active_rules_map, tool_conf, all_results)
+
+    # --- 保存结果 ---
+    util.save_json_file_path(args.outputpath, all_results)
+    print(f"Analysis finished! Results saved to {args.outputpath}")
+
+if __name__ == '__main__':
+    main()

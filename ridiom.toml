@@ -1,0 +1,132 @@
+# ===============================================
+#  RIdiom (RefactoringIdioms) 工具的配置
+#  (支持正向 "refactor" 和反向 "explain")
+# ===============================================
+
+[tool.ridiom]
+# 1. 全局配置 (Global Configuration)
+# 这些设置对所有模式都有效
+
+# 要检查的路径。["."] 代表从当前目录开始扫描。
+include = ["."]
+
+# 要排除的文件和目录。
+exclude = [
+    ".git",
+    ".venv",
+    "venv",
+    ".ruff_cache",
+    ".pytest_cache",
+    ".mypy_cache",
+    "build",
+    "dist",
+    "__pypackages__",
+]
+
+# 允许使用 # noqa: RID001 这样的内联注释来禁用检查。
+enable-noqa = true
+
+
+
+# ===============================================
+# 2. 核心转换配置 (Core Transformation)
+# ===============================================
+# "mode" 用于选择工具的行为
+#
+# "refactor" = (RIdiom 模式)
+#   正向转换：检测“非地道”代码，并将其重构为“地道”代码。
+#
+# "explain" = (Deldiom 模式)
+#   反向转换：检测“地道”代码，并将其转换为“非地道”代码以供解释。
+mode = "refactor" # 默认保持为 RIdiom 模式
+
+# mode = "refactor", fix = false:
+#   (默认) 只检测并报告“非地道”代码。
+#
+# mode = "refactor", fix = true:
+#   自动将“非地道”代码 *重构* 为“地道”代码。
+#
+# mode = "explain", fix = false:
+#   (默认) 只检测并报告“地道”代码 (以及它对应的非地道解释)。
+#
+# mode = "explain", fix = true:
+#   自动将“地道”代码 *反向重构* 为“非地道”代码。
+fix = false
+
+# 是否执行有风险的转换 (主要适用于 "refactor" 模式)。
+unsafe-fixes = false
+
+
+
+# ===============================================
+# 3. 规则配置 (Rules Configuration)
+# ===============================================
+[tool.ridiom.rules]
+# 规则选择列表。
+# 这里已将推导式拆分为三个独立的规则，方便单独控制。
+select = [
+    "list-comprehension",
+    "set-comprehension",
+    "dict-comprehension",
+    "chain-comparison",
+    "truth-value-test",
+    "for-else",
+    "assign-multiple-targets",
+    "star-in-func-call",
+    "for-multiple-targets",
+]
+
+# 在 "全选" 模式 (即 select = []) 下，明确禁用某些规则。
+ignore = []
+
+# --- 细粒度规则配置 ---
+# 以下设置为每条规则提供了更精细的控制
+
+[tool.ridiom.rules.list-comprehension]
+# 是否转换带 if 条件的列表推导式。
+refactor-with-if = true
+
+[tool.ridiom.rules.set-comprehension]
+# 是否转换带 if 条件的集合推导式。
+refactor-with-if = true
+
+[tool.ridiom.rules.dict-comprehension]
+# 是否转换带 if 条件的字典推导式。
+refactor-with-if = true
+
+[tool.ridiom.rules.chain-comparison]
+# 重构限制的最多*操作数*数量。
+# 设为 false 意味着此规则默认*禁用*，
+max-operands-to-refactor = false
+
+[tool.ridiom.rules.assign-multiple-targets]
+# 重构限制的最多*赋值*数量。
+# 设为 false 意味着此规则默认*禁用*。
+max-assignments-to-refactor = false
+
+[tool.ridiom.rules.star-in-func-call]
+#重构限制的最多*连续解包元素*数量。
+# 设为 false 意味着此规则默认*禁用*。
+max-elements-to-unpack = false
+
+[tool.ridiom.rules.for-multiple-targets]
+#重构限制的最多*循环体内解包元素*数量。
+# 设为 false 意味着此规则默认*禁用*。
+max-elements-to-unpack = false
+
+
+# ===============================================
+# 4. 输出配置 (Output Configuration)
+# ===============================================
+[tool.ridiom.output]
+# 指定报告的格式:
+# "stdout" (直接打印到控制台)
+# "json"   (生成 JSON 文件，对应原 --outputpath)
+# "diff"   (只显示差异，不修改文件)
+format = "stdout"
+
+# 指定输出文件的路径 (仅在 format = "json" 时生效)。
+file = "ridiom-report.json"
+
+# 控制台输出的详细程度: 0=安静, 1=默认, 2=详细
+verbosity = 1
