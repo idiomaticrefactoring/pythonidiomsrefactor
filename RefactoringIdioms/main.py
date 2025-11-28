@@ -25,9 +25,9 @@ from RefactoringIdioms.extract_transform_complicate_code_new import (
     transform_chained_comparison_compli_to_simple as chain_compare_mod
 )
 from RefactoringIdioms.extract_transform_complicate_code_new.comprehension import (
-    extract_compli_for_comprehension_only_one_stmt_improve as list_comp_mod,
-    extract_compli_for_comprehension_dict_only_one_stmt_new as dict_comp_mod,
-    extract_compli_for_comprehension_set_only_one_stmt as set_comp_mod
+    extract_dict_comprehension as dict_comp_mod,
+    extract_list_comprehension as list_comp_mod,
+    extract_set_comprehension as set_comp_mod
 )
 
 # ==========================================
