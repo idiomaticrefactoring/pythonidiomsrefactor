@@ -17,9 +17,9 @@ import RefactoringIdioms.CodeInfo as CodeInfo
 
 # 导入具体的重构逻辑模块
 from RefactoringIdioms.extract_transform_complicate_code_new import (
-    transform_for_else_compli_to_simple_improve_copy_result_csv as for_else_mod,
+    extract_multiple_assign as assign_multi_mod,
+    extract_for_else as for_else_mod,
     extract_compli_var_unpack_for_target_improve_new as for_multi_target_mod,
-    extract_compli_multiple_assign_code_improve_complete_improve as assign_multi_mod,
     extract_compli_var_unpack_star_call_improve as star_call_mod,
     extract_compli_truth_value_test_code_remove_is_isnot as truth_value_mod,
     transform_chained_comparison_compli_to_simple as chain_compare_mod

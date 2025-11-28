@@ -12,7 +12,6 @@ current_file_path = os.path.abspath(__file__)
 project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(current_file_path))))
 if project_root not in sys.path:
     sys.path.append(project_root)
-
 package_dir = os.path.join(project_root, "RefactoringIdioms")
 if package_dir not in sys.path:
     sys.path.append(package_dir)
@@ -30,7 +29,7 @@ except ImportError:
         import util
         from extract_simp_cmpl_data import ast_util
     except ImportError:
-        pass
+        print("ImportError in comprehension_utils.py")
 
 # ==========================================
 # 全局变量初始化
@@ -373,7 +372,7 @@ def whether_first_var_is_empty_assign(tree, for_node, vars, const_func_name="app
     
     return flag, assign_stmt_lineno, assign_stmt, remove_ass_flag
 
-def get_complicated_for_comprehen_code_list(tree, content, const_empty_list=["[]"], const_func_name="append"):
+def get_complicated_for_comprehen_code_list(tree, const_empty_list=["[]"], const_func_name="append"):
     code_index_start_end_list = []
     if not hasattr(tree, 'body'):
         return []
@@ -401,8 +400,11 @@ def get_complicated_for_comprehen_code_list(tree, content, const_empty_list=["[]
     code_index_start_end_list = filter_overlap(code_index_start_end_list)
     return code_index_start_end_list
 
-def save_one_repo(repo_name, save_complicated_code_dir_pkl=None):
-    pass 
-
+def has_if_node(node):
+    """检查节点下是否包含 If 节点，用于配置过滤"""
+    for child in ast.walk(node):
+        if isinstance(child, ast.If):
+            return True
+    return False
 if __name__ == '__main__':
     pass

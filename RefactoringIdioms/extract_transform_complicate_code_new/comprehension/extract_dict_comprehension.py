@@ -12,11 +12,7 @@ from RefactoringIdioms.extract_simp_cmpl_data import ast_util
 from RefactoringIdioms.extract_transform_complicate_code_new.comprehension import comprehension_utils
 from RefactoringIdioms.transform_c_s import transform_comprehension_dict_compli_to_simple
 
-def has_if_node(node):
-    for child in ast.walk(node):
-        if isinstance(child, ast.If):
-            return True
-    return False
+
 
 def get_dict_compreh(content, config=None):
     if config is None:
@@ -43,7 +39,7 @@ def get_dict_compreh(content, config=None):
             )
             
             for for_node, assign_node, remove_ass_flag in new_code_list:
-                if not refactor_with_if and has_if_node(for_node):
+                if not refactor_with_if and comprehension_utils.has_if_node(for_node):
                     continue
 
                 new_code = transform_comprehension_dict_compli_to_simple.transform(for_node, assign_node)

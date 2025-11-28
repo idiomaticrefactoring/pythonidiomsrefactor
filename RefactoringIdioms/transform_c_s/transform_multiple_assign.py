@@ -66,7 +66,7 @@ def is_depend(pre_tar, next_tar):
                 return 1
 
         return 0
-def transform_multiple_assign(old_ass_list):
+def transform(old_ass_list):
     # print("ass_list: ",ass_list)
     ass_list=copy.deepcopy(old_ass_list)
     remove_ind_list=set([])
@@ -139,7 +139,7 @@ data[jj + 1] = tmp_imag
     for node in ast.walk(tree):
         if isinstance(node,ast.Assign):
             ass_list.append(node)
-    new_code = transform_multiple_assign(ass_list)
+    new_code = transform(ass_list)
     print(new_code)
 
     # for code_frag in code_list:

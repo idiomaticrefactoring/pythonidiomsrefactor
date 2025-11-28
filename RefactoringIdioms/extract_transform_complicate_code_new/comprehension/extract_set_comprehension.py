@@ -18,12 +18,7 @@ from RefactoringIdioms.extract_simp_cmpl_data import ast_util
 from RefactoringIdioms.extract_transform_complicate_code_new.comprehension import comprehension_utils
 from RefactoringIdioms.transform_c_s import transform_set_comp
 
-def has_if_node(node):
-    """检查节点下是否包含 If 节点，用于配置过滤"""
-    for child in ast.walk(node):
-        if isinstance(child, ast.If):
-            return True
-    return False
+
 
 def get_set_compreh(content, config=None):
     """
@@ -56,7 +51,7 @@ def get_set_compreh(content, config=None):
             for for_node, assign_node, remove_ass_flag in new_code_list:
                 
                 # 检查配置：如果禁用了 refactor-with-if 且代码包含 if，则跳过
-                if not refactor_with_if and has_if_node(for_node):
+                if not refactor_with_if and comprehension_utils.has_if_node(for_node):
                     continue
 
                 # 执行转换 (调用针对 Set 的 transform 模块)
