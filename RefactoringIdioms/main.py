@@ -8,21 +8,21 @@ from typing import List, Dict, Callable, Any, Tuple
 # ==========================================
 # 0. 环境设置与依赖导入
 # ==========================================
-abs_path = os.path.abspath(os.path.dirname(__file__))
-package_path = "/".join(abs_path.split("/")[:-1])
-sys.path.append(package_path)
+current_file_path = os.path.abspath(__file__)
+project_root = os.path.dirname(os.path.dirname(current_file_path))
+if project_root not in sys.path:
+    sys.path.append(project_root)
 
 import RefactoringIdioms.util as util
 import RefactoringIdioms.CodeInfo as CodeInfo
-
 # 导入具体的重构逻辑模块
 from RefactoringIdioms.extract_transform_complicate_code_new import (
     extract_multiple_assign as assign_multi_mod,
     extract_for_else as for_else_mod,
-    extract_compli_var_unpack_for_target_improve_new as for_multi_target_mod,
-    extract_compli_var_unpack_star_call_improve as star_call_mod,
-    extract_compli_truth_value_test_code_remove_is_isnot as truth_value_mod,
-    transform_chained_comparison_compli_to_simple as chain_compare_mod
+    extract_multiple_target as for_multi_target_mod,
+    extract_star_call as star_call_mod,
+    extract_truth_value as truth_value_mod,
+    transform_chained_comparison as chain_compare_mod
 )
 from RefactoringIdioms.extract_transform_complicate_code_new.comprehension import (
     extract_dict_comprehension as dict_comp_mod,
@@ -31,7 +31,7 @@ from RefactoringIdioms.extract_transform_complicate_code_new.comprehension impor
 )
 
 # ==========================================
-# 1. 辅助函数 (Helpers)
+# 1. 辅助函数
 # ==========================================
 
 def load_config(config_path="ridiom.toml"):
@@ -103,11 +103,9 @@ def wrap_idiom_func(func, name):
     闭包装饰器：
     1. 统一调用接口，支持传入配置
     2. 自动插入 Idiom 名称
-    注意：这里不再处理 noqa，只负责运行和格式化。
     """
     def wrapper(code_frag, config: Dict[str, Any] = None):
         print(f">>> Checking {name}...")
-        
         # 尝试将细粒度配置 (config) 传递给底层函数
         try:
             if config is not None:
@@ -152,7 +150,7 @@ def process_single_file(
     """
     对单个文件运行所有激活的重构规则，并在此处显式处理 noqa 过滤
     """
-    print(f"************ Processing {filepath.split('/')[-1]} ************")
+    print(f"************ Processing {os.path.basename(filepath)} ************")
     
     # 1. 加载 AST (用于分析)
     try:
@@ -206,7 +204,7 @@ def process_single_file(
 
     # 4. 格式化并输出
     if file_results:
-        print(f"************ Result Summary of {filepath.split('/')[-1]} ************")
+        print(f"************ Result Summary of {os.path.basename(filepath)} ************")
         for ind, res in enumerate(file_results):
             idiom, cl, me, oldcode, new_code, *rest = res
             lineno_list = rest[0] if rest else []
@@ -223,7 +221,7 @@ def process_single_file(
             )
             print(f">>> Result {ind+1} \n{code_info.full_info()}")
             output_list.append(code_info.__dict__)
-        print(f"************ End of {filepath.split('/')[-1]} ************\n")
+        print(f"************ End of {os.path.basename(filepath)} ************\n")
 
 # ==========================================
 # 4. 主程序入口
@@ -238,7 +236,7 @@ def main():
 
     # --- 加载配置 ---
     config = load_config(args.config)
-    tool_conf = config.get("tool", {}).get("ridiom", {})
+    tool_conf = config.get("ridiom", {})
     rules_conf = tool_conf.get("rules", {})
 
     # --- 扫描文件 ---

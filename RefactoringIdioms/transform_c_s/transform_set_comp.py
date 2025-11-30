@@ -4,20 +4,12 @@ import sys, ast, copy, os
 # 最小化修改：路径与导入修复
 # ==========================================
 current_file_path = os.path.abspath(__file__)
-# transform_c_s -> RefactoringIdioms -> Root
 project_root = os.path.dirname(os.path.dirname(os.path.dirname(current_file_path)))
 if project_root not in sys.path:
     sys.path.append(project_root)
 
-try:
-    from RefactoringIdioms import util
-except ImportError:
-    try:
-        import util
-    except ImportError:
-        # 如果 util 实在找不到，mock 一个假的以防止 transform 逻辑崩溃
-        # (因为 transform 函数本身其实不依赖 util，只有 replace_file_content 依赖)
-        util = None
+from RefactoringIdioms import util
+
 
 def copy_compre(node):
     compr = ast.comprehension()

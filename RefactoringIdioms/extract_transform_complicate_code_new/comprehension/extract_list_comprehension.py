@@ -7,7 +7,6 @@ import traceback
 # 路径修复
 # ==========================================
 current_file_path = os.path.abspath(__file__)
-# extract_compli_...py -> comprehension -> extract_transform... -> RefactoringIdioms -> ROOT
 project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(current_file_path))))
 if project_root not in sys.path:
     sys.path.append(project_root)
@@ -98,5 +97,6 @@ def test():
             a.append(i)
     '''
     print(get_list_compreh(code))
+    print(get_list_compreh(code, {"refactor-with-if": False}))
 
 

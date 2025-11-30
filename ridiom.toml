@@ -3,7 +3,7 @@
 #  (支持正向 "refactor" 和反向 "explain")
 # ===============================================
 
-[tool.ridiom]
+[ridiom]
 # 1. 全局配置 (Global Configuration)
 # 这些设置对所有模式都有效
 
@@ -61,7 +61,7 @@ unsafe-fixes = false
 # ===============================================
 # 3. 规则配置 (Rules Configuration)
 # ===============================================
-[tool.ridiom.rules]
+[ridiom.rules]
 # 规则选择列表。
 # 这里已将推导式拆分为三个独立的规则，方便单独控制。
 select = [
@@ -82,34 +82,34 @@ ignore = []
 # --- 细粒度规则配置 ---
 # 以下设置为每条规则提供了更精细的控制
 
-[tool.ridiom.rules.list-comprehension]
+[ridiom.rules.list-comprehension]
 # 是否转换带 if 条件的列表推导式。
 refactor-with-if = true
 
-[tool.ridiom.rules.set-comprehension]
+[ridiom.rules.set-comprehension]
 # 是否转换带 if 条件的集合推导式。
 refactor-with-if = true
 
-[tool.ridiom.rules.dict-comprehension]
+[ridiom.rules.dict-comprehension]
 # 是否转换带 if 条件的字典推导式。
 refactor-with-if = true
 
-[tool.ridiom.rules.chain-comparison]
+[ridiom.rules.chain-comparison]
 # 重构限制的最多*操作数*数量。
 # 设为 false 意味着此规则默认*禁用*，
 max-operands-to-refactor = false
 
-[tool.ridiom.rules.assign-multiple-targets]
+[ridiom.rules.assign-multiple-targets]
 # 重构限制的最多*赋值*数量。
 # 设为 false 意味着此规则默认*禁用*。
 max-assignments-to-refactor = false
 
-[tool.ridiom.rules.star-in-func-call]
+[ridiom.rules.star-in-func-call]
 #重构限制的最多*连续解包元素*数量。
 # 设为 false 意味着此规则默认*禁用*。
 max-elements-to-unpack = false
 
-[tool.ridiom.rules.for-multiple-targets]
+[ridiom.rules.for-multiple-targets]
 #重构限制的最多*循环体内解包元素*数量。
 # 设为 false 意味着此规则默认*禁用*。
 max-elements-to-unpack = false
@@ -118,7 +118,7 @@ max-elements-to-unpack = false
 # ===============================================
 # 4. 输出配置 (Output Configuration)
 # ===============================================
-[tool.ridiom.output]
+[ridiom.output]
 # 指定报告的格式:
 # "stdout" (直接打印到控制台)
 # "json"   (生成 JSON 文件，对应原 --outputpath)
