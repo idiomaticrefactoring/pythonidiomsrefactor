@@ -15,7 +15,7 @@ if project_root not in sys.path:
 
 from RefactoringIdioms.extract_simp_cmpl_data import ast_util
 from RefactoringIdioms.extract_simp_cmpl_data.extract_compli_truth_value_test_code import decide_compare_complicate_truth_value
-from RefactoringIdioms.transform_c_s.transform_truth_value_test_compli_to_simple import transform_c_s_truth_value_test
+from RefactoringIdioms.transform_c_s.transform_truth_value import transform_c_s_truth_value_test
 
 '''
 这里在遍历的时候需要记录下 变量T的读写
@@ -148,7 +148,7 @@ def is_same_two_if_test(test_1, test_2):
     def is_same_ops(op1, op2):
         if isinstance(op1, (ast.Eq, ast.Is)) and isinstance(op2, (ast.Eq, ast.Is)):
             return 1
-        elif isinstance(op2, (ast.NotEq, ast.IsNot)) and isinstance(op1, (ast.NotEq, ast.IsNot)):
+        elif isinstance(op1, (ast.NotEq, ast.IsNot)) and isinstance(op2, (ast.NotEq, ast.IsNot)):
             return 1
         elif isinstance(op1, (ast.Lt)) and isinstance(op2, (ast.Lt)):
             return 1
@@ -296,7 +296,6 @@ def remove_assign(tree_copy, child_copy, tree, child, if_vars_list, intersect_in
                 if count > len(intersect_infor_ass_list_in_for):
                     break
         else:
-            # print("come remove_assign: code1 behind should not occur var")
             count = 0
             for body in tree.body[ind + 1:]:
                 for node in ast.walk(body):
@@ -356,7 +355,6 @@ def traverse_cur_layer(tree, code_list, ass_init_list):
                 if not if_varnode or (isinstance(if_varnode,ast.BoolOp) and isinstance(if_varnode.op,(ast.And,ast.Or))):
                     traverse_cur_layer(child, code_list, ass_init_list)
                     continue
-                
                 all_assign_list_in_for = []
                 if_list_in_for = []
                 break_list_in_for=[]
@@ -367,11 +365,12 @@ def traverse_cur_layer(tree, code_list, ass_init_list):
                     intersect_infor_ass_list_in_for=[]
                     visit_vars(if_varnode.test, if_vars_list)
                     intersect_flag_ass_init, intersect_infor_ass_init = get_intersect_vars(ass_init_list, if_vars_list)
-                    
+                    # init_list没有初始化的语句
                     if not intersect_flag_ass_init or len(intersect_infor_ass_init[-1][-1]) > 1:
                         flag_simplify = 0
                         break
                     else:
+                        #ass_init的语句应该和for节点同父母或者for节点属于ass_init.parent
                         for ind_chi, ass_child in enumerate(tree.body[:ind]):
                             if isinstance(ass_child,(ast.Assign,ast.AnnAssign)):
                                 continue
@@ -393,17 +392,17 @@ def traverse_cur_layer(tree, code_list, ass_init_list):
 
                         if not flag_simplify:
                             traverse_cur_layer(child, code_list, ass_init_list)
-                            # print("init ass is not valid")
+                            print("init ass is not valid")
                             continue
 
+
+
+
                         if is_same_ass_init_if_test(intersect_infor_ass_init[-1][1], if_varnode.test):
-                            modify(tree_copy, child_copy, if_varnode, if_list_each, 1)
                             flag_simplify = 1
                             assign_flag = 1
                         elif if_varnode.orelse and is_differ_ass_again_if_test(intersect_infor_ass_init[-1][1],
                                                                                if_varnode.test):
-                            for if_list_each in if_list_in_for:
-                                modify(tree_copy, child_copy, if_varnode, if_list_each, 0)
                             flag_simplify = 1
                             assign_flag = 1
                         else:
@@ -412,7 +411,7 @@ def traverse_cur_layer(tree, code_list, ass_init_list):
                     if not flag_simplify:
                         traverse_cur_layer(child, code_list, ass_init_list)
                         continue
-                    
+                    # print(">>>>has determined ass_init and if_var_test: ", len(if_list_in_for))
                     for ind_test,assign_list_in_for in enumerate(all_assign_list_in_for):
                         if_list_each=if_list_in_for[ind_test]
                         flag_inn, info_inn = get_intersect_vars(assign_list_in_for, if_vars_list)
@@ -420,16 +419,16 @@ def traverse_cur_layer(tree, code_list, ass_init_list):
                         if flag_inn:
                             intersect_infor_ass_list_in_for.append(info_inn)
                             for line_no,ass,inter_var in info_inn:
-                                if is_differ_ass_again_if_test(ass, if_varnode.test):
-                                    body_break_flag=modify(tree_copy, child_copy, if_varnode, if_list_each, 1)
-                                    if body_break_flag:
-                                        flag_simplify = 0
-                                    break
-                                elif if_varnode.orelse and is_same_ass_init_if_test(ass, if_varnode.test):
-                                    body_break_flag=modify(tree_copy, child_copy, if_varnode, if_list_each, 0)
-                                    if body_break_flag:
-                                        flag_simplify = 0
-                                    break
+                                    if is_differ_ass_again_if_test(ass, if_varnode.test):
+                                        body_break_flag=modify(tree_copy, child_copy, if_varnode, if_list_each, 1)
+                                        if body_break_flag:
+                                            flag_simplify = 0
+                                        break
+                                    elif if_varnode.orelse and is_same_ass_init_if_test(ass, if_varnode.test):
+                                        body_break_flag=modify(tree_copy, child_copy, if_varnode, if_list_each, 0)
+                                        if body_break_flag:
+                                            flag_simplify = 0
+                                        break
                             else:
                                 flag_simplify = 0
                                 break
@@ -451,6 +450,7 @@ def traverse_cur_layer(tree, code_list, ass_init_list):
                                     else:
                                         flag_simplify = 0
                                         break
+
                                 else:
                                     flag_simplify = 0
                                     break
@@ -462,12 +462,14 @@ def traverse_cur_layer(tree, code_list, ass_init_list):
                     if flag_simplify and assign_flag:
                             init_ass_remove_flag=remove_assign(tree_copy,child_copy,tree,child,if_vars_list,intersect_infor_ass_list_in_for,intersect_infor_ass_init,ind)
 
+
                     if flag_simplify:
                         code_list.append([tree,tree_copy,break_list_in_for,child,child_copy,intersect_infor_ass_init[0][1],if_varnode,init_ass_remove_flag])
 
+
+
             else:
-                for e_chi in ast.walk(child_copy):
-                    if isinstance(e_chi, (ast.Assign,ast.AnnAssign)) and child_copy not in ass_init_list  :
+                    if isinstance(child_copy, (ast.Assign,ast.AnnAssign)) and child_copy not in ass_init_list  :
                         ass_init_list.append(child_copy)
 
             traverse_cur_layer(child, code_list, ass_init_list)
@@ -505,7 +507,7 @@ def transform_for_else_code(content, config=None):
         return code_pair_list
 
     except:
-        # traceback.print_exc()
+        traceback.print_exc()
         return code_pair_list
 
 if __name__ == '__main__':

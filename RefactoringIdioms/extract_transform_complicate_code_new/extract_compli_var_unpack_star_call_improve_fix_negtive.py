@@ -12,7 +12,7 @@ import util
 from sympy import *
 from RefactoringIdioms.extract_simp_cmpl_data import ast_util
 
-from RefactoringIdioms.transform_c_s import transform_var_unpack_call_compli_to_simple
+from RefactoringIdioms.transform_c_s import transform_var_unpack_call
 import traceback
 
 def whether_add_end(slice_list, each_seq, arg_seq,step,new_arg_same_list, beg, end):
@@ -271,7 +271,7 @@ def save_repo_for_else_complicated(repo_name):
 
                 for ind, arg_info_list in enumerate(new_arg_same_list):
                     copy_arg_info_list=copy.deepcopy(arg_info_list)
-                    star_node = transform_var_unpack_call_compli_to_simple.transform_var_unpack_call_each_args(
+                    star_node = transform_var_unpack_call.transform_var_unpack_call_each_args(
                         copy_arg_info_list)
                     new_code_list.append([arg_info_list, star_node])
                 # print("new_code_list ", new_code_list)

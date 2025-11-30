@@ -11,7 +11,7 @@ import time,util
 # from code1 import util
 from RefactoringIdioms.extract_simp_cmpl_data import ast_util
 from RefactoringIdioms.extract_simp_cmpl_data.extract_compli_truth_value_test_code import decide_compare_complicate_truth_value
-from RefactoringIdioms.transform_c_s.transform_truth_value_test_compli_to_simple import transform_c_s_truth_value_test
+from RefactoringIdioms.transform_c_s.transform_truth_value import transform_c_s_truth_value_test
 
 # from code1.extract_simp_cmpl_data import ast_util
 # from code1.extract_simp_cmpl_data.extract_compli_truth_value_test_code import decide_compare_complicate_truth_value

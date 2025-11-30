@@ -83,7 +83,7 @@ def get_list_compreh(content, config=None):
         return code_pair_list
 
     except Exception:
-        # traceback.print_exc()
+        traceback.print_exc()
         return []
 
 if __name__ == '__main__':
