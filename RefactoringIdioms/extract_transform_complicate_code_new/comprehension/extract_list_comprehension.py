@@ -33,11 +33,11 @@ def get_list_compreh(content, config=None):
 
     try:
         file_tree = ast.parse(content)
-        ana_py = ast_util.Fun_Analyzer()
-        ana_py.visit(file_tree)
+        function_analyzer = ast_util.Fun_Analyzer()
+        function_analyzer.visit(file_tree)
 
-        for tree, class_name in ana_py.func_def_list:
-            me_name = getattr(tree, "name", "")
+        for tree, class_name in function_analyzer.func_def_list:
+            method_name = getattr(tree, "name", "")
             
             # 调用通用工具函数，查找列表构建模式
             # 关键参数: 
@@ -45,7 +45,6 @@ def get_list_compreh(content, config=None):
             # 2. const_func_name="append" : 识别 .append() 调用
             new_code_list = comprehension_utils.get_complicated_for_comprehen_code_list(
                 tree, 
-                content, 
                 const_empty_list=["[]", "list()"], 
                 const_func_name="append"
             )
@@ -75,7 +74,7 @@ def get_list_compreh(content, config=None):
                 
                 code_pair_list.append([
                     class_name, 
-                    me_name, 
+                    method_name, 
                     old_code_str, 
                     complete_new_code, 
                     line_list
@@ -90,13 +89,48 @@ def get_list_compreh(content, config=None):
 if __name__ == '__main__':
     # 简单的本地测试
     code = '''
-def test():
+def main():
     a = []
     for i in range(10):
         if i > 5:
             a.append(i)
+    
+    b = []
+    for j in range(5):
+        b.append(j * 2)
     '''
-    print(get_list_compreh(code))
-    print(get_list_compreh(code, {"refactor-with-if": False}))
+    
+    print("Testing with default config (should detect):")
+    results1 = get_list_compreh(code)
+    
+    print("\nTesting with refactor-with-if=False (should be empty):")
+    results2 = get_list_compreh(code, config={"refactor-with-if": False})
+    
+    # 将结果列表放入一个元组或列表进行遍历
+    all_test_runs = [("Default Config", results1), ("No If Config", results2)]
+    
+    for config_name, results in all_test_runs:
+        print(f"\n=== Results for {config_name} ===")
+        if not results:
+            print("No refactoring opportunities found.")
+            continue
+            
+        for res in results:
+            # res 是一个单独的重构项列表 [cl, me, old, new, lines]
+            try:
+                cl, me, oldcode, new_code, *rest = res
+                lineno_list = rest[0] if rest else []
+                
+                # 为了演示，简单打印即可，不需要构建 CodeInfo (除非你导入了它)
+                # 如果你一定要用 CodeInfo，确保已经正确 import
+                print(f"Method: {me}")
+                print(f"Old Code:\n{oldcode}")
+                print(f"New Code:\n{new_code}")
+                print("-" * 20)
+            except ValueError as e:
+                print(f"Error unpacking result: {e}, raw data: {res}")
+
+
+
 
 

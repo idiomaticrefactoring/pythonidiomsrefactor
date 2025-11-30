@@ -17,7 +17,6 @@ class Fun_Analyzer(ast.NodeVisitor):
         ast.NodeVisitor.generic_visit(self, node)
 
     def visit_ClassDef(self, node):
-
         class_ana=Fun_Analyzer(node.name)
         for stmt in node.body:
             class_ana.visit(stmt)

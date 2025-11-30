@@ -43,7 +43,6 @@ def get_set_compreh(content, config=None):
             # 关键参数: const_empty_list=["set()"], const_func_name="add"
             new_code_list = comprehension_utils.get_complicated_for_comprehen_code_list(
                 tree, 
-                content, 
                 const_empty_list=["set()"], 
                 const_func_name="add"
             )
@@ -89,16 +88,46 @@ def get_set_compreh(content, config=None):
 if __name__ == '__main__':
     # 简单的本地测试
     code = '''
-def test():
-    s = set()
+def main():
+    a = set()
     for i in range(10):
         if i > 5:
-            s.add(i)
+            a.add(i)
     
-        '''
-    print(get_set_compreh(code))
-    print("-----"*10)
-    print(get_set_compreh(code, config={"refactor-with-if": False}))
+    b = set()
+    for j in range(5):
+        b.add(j * 2)
+    '''
+    
+    print("Testing with default config (should detect):")
+    results1 = get_set_compreh(code)
+    
+    print("\nTesting with refactor-with-if=False (should be empty):")
+    results2 = get_set_compreh(code, config={"refactor-with-if": False})
+    
+    # 将结果列表放入一个元组或列表进行遍历
+    all_test_runs = [("Default Config", results1), ("No If Config", results2)]
+    
+    for config_name, results in all_test_runs:
+        print(f"\n=== Results for {config_name} ===")
+        if not results:
+            print("No refactoring opportunities found.")
+            continue
+            
+        for res in results:
+            # res 是一个单独的重构项列表 [cl, me, old, new, lines]
+            try:
+                cl, me, oldcode, new_code, *rest = res
+                lineno_list = rest[0] if rest else []
+                
+                # 为了演示，简单打印即可，不需要构建 CodeInfo (除非你导入了它)
+                # 如果你一定要用 CodeInfo，确保已经正确 import
+                print(f"Method: {me}")
+                print(f"Old Code:\n{oldcode}")
+                print(f"New Code:\n{new_code}")
+                print("-" * 20)
+            except ValueError as e:
+                print(f"Error unpacking result: {e}, raw data: {res}")
 
 
 

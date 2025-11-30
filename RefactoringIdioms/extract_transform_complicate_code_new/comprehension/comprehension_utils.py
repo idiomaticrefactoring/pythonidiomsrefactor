@@ -19,17 +19,8 @@ if package_dir not in sys.path:
 # ==========================================
 # 模块导入修复
 # ==========================================
-try:
-    from RefactoringIdioms import complicated_code_util
-    from RefactoringIdioms import util
-    from RefactoringIdioms.extract_simp_cmpl_data import ast_util
-except ImportError:
-    try:
-        import complicated_code_util
-        import util
-        from extract_simp_cmpl_data import ast_util
-    except ImportError:
-        print("ImportError in comprehension_utils.py")
+from RefactoringIdioms import util
+from RefactoringIdioms.extract_simp_cmpl_data import ast_util
 
 # ==========================================
 # 全局变量初始化
@@ -406,5 +397,6 @@ def has_if_node(node):
         if isinstance(child, ast.If):
             return True
     return False
+
 if __name__ == '__main__':
     pass
