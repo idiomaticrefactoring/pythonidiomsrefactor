@@ -16,7 +16,7 @@ if project_root not in sys.path:
 import RefactoringIdioms.util as util
 import RefactoringIdioms.CodeInfo as CodeInfo
 # 导入具体的重构逻辑模块
-from RefactoringIdioms.extract_complicate_code_new import (
+from RefactoringIdioms.extract_complicate_code import (
     extract_assign_multiple_assign as assign_multi_mod,
     extract_chain_compare as chain_compare_mod,
     extract_for_else as for_else_mod,
@@ -24,7 +24,7 @@ from RefactoringIdioms.extract_complicate_code_new import (
     extract_star_call as star_call_mod,
     extract_truth_value as truth_value_mod
 )
-from RefactoringIdioms.extract_complicate_code_new.comprehension import (
+from RefactoringIdioms.extract_complicate_code.comprehension import (
     extract_dict_comprehension as dict_comp_mod,
     extract_list_comprehension as list_comp_mod,
     extract_set_comprehension as set_comp_mod
@@ -276,4 +276,4 @@ def main():
     print(f"Analysis finished! Results saved to {args.outputpath}")
 
 if __name__ == '__main__':
-    pass
+    main()

@@ -3,20 +3,31 @@ import ast
 import os
 import traceback
 
+# ==========================================
+# 路径修复
+# ==========================================
 current_file_path = os.path.abspath(__file__)
 project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(current_file_path))))
 if project_root not in sys.path:
     sys.path.append(project_root)
 
+# ==========================================
+# 模块导入
+# ==========================================
 from RefactoringIdioms.extract_simp_cmpl_data import ast_util
-from RefactoringIdioms.extract_complicate_code_new.comprehension import comprehension_utils
-from RefactoringIdioms.transform_c_s import transform_dict_comp
+from RefactoringIdioms.extract_complicate_code.comprehension import comprehension_utils
+from RefactoringIdioms.transform_c_s import transform_set_comp
 
 
 
-def get_dict_compreh(content, config=None):
+def get_set_compreh(content, config=None):
+    """
+    检测集合推导式重构的主入口函数。
+    适配 main.py 接口，支持细粒度配置。
+    """
     if config is None:
         config = {}
+        
     refactor_with_if = config.get("refactor-with-if", True)
     code_pair_list = []
 
@@ -28,32 +39,37 @@ def get_dict_compreh(content, config=None):
         for tree, class_name in ana_py.func_def_list:
             me_name = getattr(tree, "name", "")
             
-            # [关键修改] 
-            # 1. 传入 "dict()", "{}" 作为空初始化列表
-            # 2. 传入 "__setitem__" 作为操作名，utils 会识别这是字典赋值
+            # 调用通用工具函数，查找集合构建模式
+            # 关键参数: const_empty_list=["set()"], const_func_name="add"
             new_code_list = comprehension_utils.get_complicated_for_comprehen_code_list(
                 tree, 
-                const_empty_list=["dict()", "{}"], 
-                const_func_name="__setitem__" 
+                const_empty_list=["set()"], 
+                const_func_name="add"
             )
             
             for for_node, assign_node, remove_ass_flag in new_code_list:
+                
+                # 检查配置：如果禁用了 refactor-with-if 且代码包含 if，则跳过
                 if not refactor_with_if and comprehension_utils.has_if_node(for_node):
                     continue
 
-                new_code = transform_dict_comp.transform(for_node, assign_node)
+                # 执行转换 (调用针对 Set 的 transform 模块)
+                new_code = transform_set_comp.transform(for_node, assign_node)
                 
+                # 构建新代码字符串
                 if remove_ass_flag:
                     complete_new_code = ast.unparse(new_code)
                 else:
                     complete_new_code = ast.unparse(assign_node) + "\n" + ast.unparse(new_code)
                 
+                # 记录行号
                 line_list = [
                     [assign_node.lineno, assign_node.end_lineno],
                     [for_node.lineno, for_node.end_lineno]
                 ]
                 
                 old_code_str = ast.unparse(assign_node) + "\n" + ast.unparse(for_node)
+                
                 code_pair_list.append([
                     class_name, 
                     me_name, 
@@ -61,6 +77,7 @@ def get_dict_compreh(content, config=None):
                     complete_new_code, 
                     line_list
                 ])
+                
         return code_pair_list
 
     except Exception:
@@ -68,22 +85,24 @@ def get_dict_compreh(content, config=None):
         return []
 
 if __name__ == '__main__':
+    # 简单的本地测试
     code = '''
-def test():
-    d = {}
-    f = {}
+def main():
+    a = set()
     for i in range(10):
         if i > 5:
-            d[i] = i * 2
+            a.add(i)
     
+    b = set()
     for j in range(5):
-        f[j] = j + 3
+        b.add(j * 2)
     '''
+    
     print("Testing with default config (should detect):")
-    results1 = get_dict_compreh(code)
+    results1 = get_set_compreh(code)
     
     print("\nTesting with refactor-with-if=False (should be empty):")
-    results2 = get_dict_compreh(code, config={"refactor-with-if": False})
+    results2 = get_set_compreh(code, config={"refactor-with-if": False})
     
     # 将结果列表放入一个元组或列表进行遍历
     all_test_runs = [("Default Config", results1), ("No If Config", results2)]
@@ -108,6 +127,9 @@ def test():
                 print("-" * 20)
             except ValueError as e:
                 print(f"Error unpacking result: {e}, raw data: {res}")
+
+
+
 
 
 

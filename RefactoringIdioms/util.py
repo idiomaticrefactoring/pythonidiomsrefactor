@@ -42,7 +42,7 @@ def save_json_file_path(file_path,data):
     # if not os.path.exists(file_path):
     #     os.makedirs(file_path)
     with open(file_path, 'w') as json_file:
-        json.dump(data, json_file)
+        json.dump(data, json_file,indent=4, ensure_ascii=False)
 def load_file(file_path,file_name):
     with open(file_path + file_name, 'rb') as file:
 

@@ -1,20 +1,24 @@
 def f():
     a = []
+    b = []
     for e in range(10):
         a.append(e)
+    for e in range(10):
+        if e < 5:
+            b.append(e)
     b = set()
     for e in range(10):
         b.add(e)
-    payload = {}
+    payload = {}  # noqa
     for field in model.__searchable__:
         for i in range(1):
             payload[field] = getattr(model, field)
-    if i > n1 and i <= n1 + n2 and 0 == rc:
+    if i > n1 and i <=  n2 :
         print("test chain compare")
     if self.pendingRescans == []:
         print("test truth value test")
     e = throttling_mod_func(d, e)
-    f = d[0]
+    f = d[0] # noqa
     d[0] = d[e]
     d[e] = f
     for i in matches:

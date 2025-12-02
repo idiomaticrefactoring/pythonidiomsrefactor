@@ -42,7 +42,7 @@ def change_compare_node(node1):
     # 交换左右
     new_node.left = node1.comparators[-1]
     new_node.comparators = node1.comparators[::-1][1:]
-    new_node.comparators = [node1.left] 
+    new_node.comparators.append(node1.left)
     
     # 反转操作符
     for ind, op in enumerate(node1.ops[::-1]):

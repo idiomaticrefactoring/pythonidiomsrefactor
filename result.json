@@ -1,0 +1,180 @@
+[
+    {
+        "file_path": "/home/wxx/RefactoringIdioms-0.0.1/RefactoringIdioms/test_file.py",
+        "idiom": "List Comprehension",
+        "class_name": "",
+        "method_name": "f",
+        "complicated_code": "a = []\nfor e in range(10):\n    a.append(e)",
+        "simple_code": "a = [e for e in range(10)]",
+        "lineno": [
+            [
+                2,
+                2
+            ],
+            [
+                4,
+                5
+            ]
+        ]
+    },
+    {
+        "file_path": "/home/wxx/RefactoringIdioms-0.0.1/RefactoringIdioms/test_file.py",
+        "idiom": "List Comprehension",
+        "class_name": "",
+        "method_name": "f",
+        "complicated_code": "b = []\nfor e in range(10):\n    if e < 5:\n        b.append(e)",
+        "simple_code": "b = [e for e in range(10) if e < 5]",
+        "lineno": [
+            [
+                3,
+                3
+            ],
+            [
+                6,
+                8
+            ]
+        ]
+    },
+    {
+        "file_path": "/home/wxx/RefactoringIdioms-0.0.1/RefactoringIdioms/test_file.py",
+        "idiom": "Set Comprehension",
+        "class_name": "",
+        "method_name": "f",
+        "complicated_code": "b = set()\nfor e in range(10):\n    b.add(e)",
+        "simple_code": "b = {e for e in range(10)}",
+        "lineno": [
+            [
+                9,
+                9
+            ],
+            [
+                10,
+                11
+            ]
+        ]
+    },
+    {
+        "file_path": "/home/wxx/RefactoringIdioms-0.0.1/RefactoringIdioms/test_file.py",
+        "idiom": "Chain Compare",
+        "class_name": "",
+        "method_name": "f",
+        "complicated_code": "i > n1 and i <= n2",
+        "simple_code": "n1 < i <= n2",
+        "lineno": [
+            [
+                16,
+                16
+            ]
+        ]
+    },
+    {
+        "file_path": "/home/wxx/RefactoringIdioms-0.0.1/RefactoringIdioms/test_file.py",
+        "idiom": "Truth Value Test",
+        "class_name": "",
+        "method_name": "f",
+        "complicated_code": "self.pendingRescans == []",
+        "simple_code": "not self.pendingRescans",
+        "lineno": [
+            [
+                18,
+                18
+            ]
+        ]
+    },
+    {
+        "file_path": "/home/wxx/RefactoringIdioms-0.0.1/RefactoringIdioms/test_file.py",
+        "idiom": "Truth Value Test",
+        "class_name": "",
+        "method_name": "f",
+        "complicated_code": "n % x == 0",
+        "simple_code": "not n % x",
+        "lineno": [
+            [
+                32,
+                32
+            ]
+        ]
+    },
+    {
+        "file_path": "/home/wxx/RefactoringIdioms-0.0.1/RefactoringIdioms/test_file.py",
+        "idiom": "For Else",
+        "class_name": "",
+        "method_name": "f",
+        "complicated_code": "finishedForLoop = True\nfor x in range(2, n):\n    if n % x == 0:\n        finishedForLoop = False\n        break\nif finishedForLoop:\n    pass",
+        "simple_code": "for x in range(2, n):\n    if n % x == 0:\n        break\nelse:\n    pass",
+        "lineno": [
+            [
+                30,
+                30
+            ],
+            [
+                31,
+                34
+            ],
+            [
+                35,
+                36
+            ]
+        ]
+    },
+    {
+        "file_path": "/home/wxx/RefactoringIdioms-0.0.1/RefactoringIdioms/test_file.py",
+        "idiom": "Assign Multi Targets",
+        "class_name": "",
+        "method_name": "f",
+        "complicated_code": "a = []\nb = []",
+        "simple_code": "a , b  = [], []",
+        "lineno": [
+            [
+                2,
+                2
+            ],
+            [
+                3,
+                3
+            ]
+        ]
+    },
+    {
+        "file_path": "/home/wxx/RefactoringIdioms-0.0.1/RefactoringIdioms/test_file.py",
+        "idiom": "Call Star",
+        "class_name": "",
+        "method_name": "f",
+        "complicated_code": "sys.argv[1], sys.argv[2], sys.argv[3]",
+        "simple_code": "*sys.argv[1:4:1]",
+        "lineno": [
+            [
+                37,
+                37
+            ]
+        ]
+    },
+    {
+        "file_path": "/home/wxx/RefactoringIdioms-0.0.1/RefactoringIdioms/test_file.py",
+        "idiom": "For Multi Targets",
+        "class_name": "",
+        "method_name": "f",
+        "complicated_code": "for i in matches:\n    i[0]\n    i[1]",
+        "simple_code": "for i_0, i_1, *i_len in matches:\n    i_0\n    i_1",
+        "lineno": [
+            [
+                24,
+                26
+            ]
+        ]
+    },
+    {
+        "file_path": "/home/wxx/RefactoringIdioms-0.0.1/RefactoringIdioms/test_file.py",
+        "idiom": "For Multi Targets",
+        "class_name": "",
+        "method_name": "f",
+        "complicated_code": "for i in matches:\n    string = string.replace(i[0], i[1] + '_')\n    symbols.append(i[1])",
+        "simple_code": "for i_0, i_1, *i_len in matches:\n    string = string.replace(\n    i_0, \n    i_1 + '_')\n    symbols.append(\n    i_1)",
+        "lineno": [
+            [
+                27,
+                29
+            ]
+        ]
+    }
+]

@@ -15,7 +15,7 @@ if project_root not in sys.path:
 # 模块导入
 # ==========================================
 from RefactoringIdioms.extract_simp_cmpl_data import ast_util
-from RefactoringIdioms.extract_complicate_code_new.comprehension import comprehension_utils
+from RefactoringIdioms.extract_complicate_code.comprehension import comprehension_utils
 from RefactoringIdioms.transform_c_s import transform_list_comp
 
 
