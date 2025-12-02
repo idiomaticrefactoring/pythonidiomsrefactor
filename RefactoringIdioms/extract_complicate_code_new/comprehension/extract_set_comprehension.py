@@ -15,14 +15,14 @@ if project_root not in sys.path:
 # 模块导入
 # ==========================================
 from RefactoringIdioms.extract_simp_cmpl_data import ast_util
-from RefactoringIdioms.extract_transform_complicate_code_new.comprehension import comprehension_utils
-from RefactoringIdioms.transform_c_s import transform_list_comp
+from RefactoringIdioms.extract_complicate_code_new.comprehension import comprehension_utils
+from RefactoringIdioms.transform_c_s import transform_set_comp
 
 
 
-def get_list_compreh(content, config=None):
+def get_set_compreh(content, config=None):
     """
-    检测列表推导式重构的主入口函数。
+    检测集合推导式重构的主入口函数。
     适配 main.py 接口，支持细粒度配置。
     """
     if config is None:
@@ -33,20 +33,18 @@ def get_list_compreh(content, config=None):
 
     try:
         file_tree = ast.parse(content)
-        function_analyzer = ast_util.Fun_Analyzer()
-        function_analyzer.visit(file_tree)
+        ana_py = ast_util.Fun_Analyzer()
+        ana_py.visit(file_tree)
 
-        for tree, class_name in function_analyzer.func_def_list:
-            method_name = getattr(tree, "name", "")
+        for tree, class_name in ana_py.func_def_list:
+            me_name = getattr(tree, "name", "")
             
-            # 调用通用工具函数，查找列表构建模式
-            # 关键参数: 
-            # 1. const_empty_list=["[]", "list()"] : 识别空列表初始化
-            # 2. const_func_name="append" : 识别 .append() 调用
+            # 调用通用工具函数，查找集合构建模式
+            # 关键参数: const_empty_list=["set()"], const_func_name="add"
             new_code_list = comprehension_utils.get_complicated_for_comprehen_code_list(
                 tree, 
-                const_empty_list=["[]", "list()"], 
-                const_func_name="append"
+                const_empty_list=["set()"], 
+                const_func_name="add"
             )
             
             for for_node, assign_node, remove_ass_flag in new_code_list:
@@ -55,8 +53,8 @@ def get_list_compreh(content, config=None):
                 if not refactor_with_if and comprehension_utils.has_if_node(for_node):
                     continue
 
-                # 执行转换 (调用针对 List 的 transform 模块)
-                new_code = transform_list_comp.transform(for_node, assign_node)
+                # 执行转换 (调用针对 Set 的 transform 模块)
+                new_code = transform_set_comp.transform(for_node, assign_node)
                 
                 # 构建新代码字符串
                 if remove_ass_flag:
@@ -74,7 +72,7 @@ def get_list_compreh(content, config=None):
                 
                 code_pair_list.append([
                     class_name, 
-                    method_name, 
+                    me_name, 
                     old_code_str, 
                     complete_new_code, 
                     line_list
@@ -83,28 +81,29 @@ def get_list_compreh(content, config=None):
         return code_pair_list
 
     except Exception:
-        traceback.print_exc()
+        # 生产环境建议记录日志而不是打印堆栈
+        # traceback.print_exc()
         return []
 
 if __name__ == '__main__':
     # 简单的本地测试
     code = '''
 def main():
-    a = []
+    a = set()
     for i in range(10):
         if i > 5:
-            a.append(i)
+            a.add(i)
     
-    b = []
+    b = set()
     for j in range(5):
-        b.append(j * 2)
+        b.add(j * 2)
     '''
     
     print("Testing with default config (should detect):")
-    results1 = get_list_compreh(code)
+    results1 = get_set_compreh(code)
     
     print("\nTesting with refactor-with-if=False (should be empty):")
-    results2 = get_list_compreh(code, config={"refactor-with-if": False})
+    results2 = get_set_compreh(code, config={"refactor-with-if": False})
     
     # 将结果列表放入一个元组或列表进行遍历
     all_test_runs = [("Default Config", results1), ("No If Config", results2)]
@@ -129,6 +128,8 @@ def main():
                 print("-" * 20)
             except ValueError as e:
                 print(f"Error unpacking result: {e}, raw data: {res}")
+
+
 
 
 

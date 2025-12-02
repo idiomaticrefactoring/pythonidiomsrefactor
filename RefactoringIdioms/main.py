@@ -16,7 +16,7 @@ if project_root not in sys.path:
 import RefactoringIdioms.util as util
 import RefactoringIdioms.CodeInfo as CodeInfo
 # 导入具体的重构逻辑模块
-from RefactoringIdioms.extract_transform_complicate_code_new import (
+from RefactoringIdioms.extract_complicate_code_new import (
     extract_assign_multiple_assign as assign_multi_mod,
     extract_chain_compare as chain_compare_mod,
     extract_for_else as for_else_mod,
@@ -24,7 +24,7 @@ from RefactoringIdioms.extract_transform_complicate_code_new import (
     extract_star_call as star_call_mod,
     extract_truth_value as truth_value_mod
 )
-from RefactoringIdioms.extract_transform_complicate_code_new.comprehension import (
+from RefactoringIdioms.extract_complicate_code_new.comprehension import (
     extract_dict_comprehension as dict_comp_mod,
     extract_list_comprehension as list_comp_mod,
     extract_set_comprehension as set_comp_mod
@@ -40,7 +40,7 @@ def load_config(config_path="ridiom.toml"):
         try:
             return toml.load(config_path)
         except Exception as e:
-            print(f"Error loading config file {config_path}: {e}")
+            raise RuntimeError(f"配置文件损坏: {e}") from e
     return {}
 
 def check_noqa(file_lines: List[str], lineno_list: List[List[int]]) -> bool:
@@ -107,15 +107,12 @@ def wrap_idiom_func(func, name):
     def wrapper(code_frag, config: Dict[str, Any] = None):
         print(f">>> Checking {name}...")
         # 尝试将细粒度配置 (config) 传递给底层函数
-        try:
-            if config is not None:
-                results = func(code_frag, config=config)
-            else:
-                results = func(code_frag)
-        except TypeError:
-            # 兼容旧接口：不传 config
+        
+        if config is not None:
+            results = func(code_frag, config=config)
+        else:
             results = func(code_frag)
-            
+
         # 统一处理结果格式，确保第一项是 Idiom 名称
         if results:
             for item in results:
@@ -151,13 +148,11 @@ def process_single_file(
     对单个文件运行所有激活的重构规则，并在此处显式处理 noqa 过滤
     """
     print(f"************ Processing {os.path.basename(filepath)} ************")
-    
     # 1. 加载 AST (用于分析)
     try:
         code_frag = util.load_file_path(file_path=filepath)
     except Exception as e:
-        print(f"Failed to load AST for {filepath}: {e}")
-        return
+        raise RuntimeError(f"Failed to load AST for {filepath}: {e}") from e
 
     # 2. 读取源码行 (用于 noqa 检查)
     file_lines = []
@@ -166,8 +161,12 @@ def process_single_file(
         try:
             with open(filepath, 'r', encoding='utf-8') as f:
                 file_lines = f.readlines()
-        except Exception:
-            pass  # 读取源码失败则无法进行过滤，默认视为通过
+        except FileNotFoundError:
+            print(f"⚠️  Warning: Cannot read {filepath} for noqa check (file not found)")
+        except PermissionError:
+            print(f"⚠️  Warning: Cannot read {filepath} for noqa check (permission denied)")
+        except Exception as e:
+            print(f"⚠️  Warning: Cannot read {filepath} for noqa check: {e}")
 
     file_results = []
     rules_config = tool_config.get("rules", {})
@@ -277,6 +276,4 @@ def main():
     print(f"Analysis finished! Results saved to {args.outputpath}")
 
 if __name__ == '__main__':
-    result = load_config()
-    print(result)
-    #main()
+    pass

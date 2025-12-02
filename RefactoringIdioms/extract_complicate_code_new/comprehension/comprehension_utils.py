@@ -81,7 +81,7 @@ def get_time_var(vars_set):
                 visit_single_vars(e_var, all_var_list)
                 break
     except:
-        pass
+        print("get_time_var error")
     
     if not all_var_list and vars_set:
         all_var_list.append(list(vars_set)[0])
@@ -99,9 +99,23 @@ def check_call_usage_in_tree(tree, fun_name, time_var_list):
                         if safe_unparse(child) in time_var_list:
                             return True
     except:
-        pass
+        print("check_call_usage_in_tree error")
     return False
 
+def whether_contain_var(node, vars, time_var_list):
+    count = 0
+    s = safe_unparse(node)
+    if not s:
+        return 0
+    if s != list(vars)[0]:
+        try:
+            g = tokenize(BytesIO(s.encode('utf-8')).readline)
+            for toknum, child, _, _, _ in g:
+                if child in time_var_list:
+                    count += 1
+        except:
+            print("whether_contain_var error")
+    return count
 # ==========================================
 # 核心逻辑函数
 # ==========================================
@@ -234,7 +248,7 @@ def is_use_var(next_child, vars):
                 if to_child.strip() == list(vars)[0]:
                     return 1
         except:
-            pass
+            print("is_use_var error")
     return 0
 
 def whether_first_var_is_empty_assign(tree, for_node, vars, const_func_name="append", const_empty_list=["[]"]):
@@ -245,20 +259,6 @@ def whether_first_var_is_empty_assign(tree, for_node, vars, const_func_name="app
     time_var_list = get_time_var(vars)
     remove_ass_flag = 0
     
-    def whether_contain_var(node, vars, time_var_list):
-        count = 0
-        s = safe_unparse(node)
-        if not s:
-            return 0
-        if s != list(vars)[0]:
-            try:
-                g = tokenize(BytesIO(s.encode('utf-8')).readline)
-                for toknum, child, _, _, _ in g:
-                    if child in time_var_list:
-                        count += 1
-            except:
-                pass
-        return count
 
     time = whether_contain_var(for_node, vars, time_var_list)
     append_time = 0
@@ -270,7 +270,6 @@ def whether_first_var_is_empty_assign(tree, for_node, vars, const_func_name="app
             if whether_fun_is_append(child, a, const_func_name):
                 append_time += 1
             
-            # 检查函数调用参数是否使用了变量 (例如: func(a))
             try:
                 fun_name = ""
                 if hasattr(child.func, "attr"):
@@ -308,38 +307,31 @@ def whether_first_var_is_empty_assign(tree, for_node, vars, const_func_name="app
         if hasattr(node, "lineno") and node.lineno == for_node.lineno:
             break
         
-        # 查找可能的父级块
-        if hasattr(node, 'body') and isinstance(node.body, list):
-            is_parent = False
-            # 尝试判断 node 是否包裹了 for_node
-            if hasattr(node, 'lineno') and hasattr(node, 'end_lineno'):
-                if node.lineno < for_node.lineno <= node.end_lineno:
-                    is_parent = True
-            elif node.body and hasattr(node.body[0], 'lineno'):
-                # 处理没有 lineno 的块 (如 Module)
-                start = node.body[0].lineno
-                end = node.body[-1].end_lineno if hasattr(node.body[-1], 'end_lineno') else 999999
-                if start < for_node.lineno < end:
-                    is_parent = True
+        # 检查节点是否包含 for_node（父块判断）
+        # 条件1：节点有 lineno（如 FunctionDef, If, For 等）
+        # 条件2：节点无 lineno，用 body 判断（如 Module）
+        if hasattr(node, 'body') and isinstance(node.body, list) and \
+            ((hasattr(node, 'lineno') and node.lineno < for_node.lineno <= node.end_lineno) or 
+            (node.body and hasattr(node.body[0], 'lineno') and 
+            node.body[0].lineno < for_node.lineno < node.body[-1].end_lineno)):
             
-            if is_parent or True: # 遍历所有可能的块寻找初始化
-                for child in node.body:
-                    if isinstance(child, ast.Assign):
-                        try:
-                            target_name = safe_unparse(child).strip().split("=")[0].strip()
-                            value_str = safe_unparse(child.value)
-                            
-                            # 检查是否为目标变量的空初始化
-                            if target_name == list(vars)[0]:
-                                clean_val = value_str.replace(" ", "")
-                                clean_consts = [x.replace(" ", "") for x in const_empty_list]
-                                if clean_val in clean_consts:
-                                    assign_stmt = child
-                                    assign_stmt_lineno = child.lineno
-                                    for_node_block_record = node
-                                    flag = 2
-                        except:
-                            pass
+            for child in node.body:
+                if isinstance(child, ast.Assign):
+                    try:
+                        target_name = safe_unparse(child).strip().split("=")[0].strip()
+                        value_str = safe_unparse(child.value)
+                        
+                        if target_name == list(vars)[0]:
+                            # 清理空格后比较
+                            clean_val = value_str.replace(" ", "")
+                            clean_consts = [x.replace(" ", "") for x in const_empty_list]
+                            if clean_val in clean_consts:
+                                assign_stmt = child
+                                assign_stmt_lineno = child.lineno
+                                for_node_block_record = node
+                                flag = 2
+                    except:
+                        print("whether_first_var_is_empty_assign assign error")
 
     if for_node_block_record:
         for child in ast.iter_child_nodes(for_node_block_record):
@@ -348,7 +340,6 @@ def whether_first_var_is_empty_assign(tree, for_node, vars, const_func_name="app
         
         for node in ast.walk(for_node_block_record):
             if hasattr(node, "end_lineno") and hasattr(node, "lineno"):
-                # 检查初始化和循环之间是否有干扰
                 if node != assign_stmt and node.end_lineno < for_node.lineno and node.lineno > assign_stmt_lineno:
                     s = safe_unparse(node)
                     if s and s != list(vars)[0]:
@@ -360,7 +351,15 @@ def whether_first_var_is_empty_assign(tree, for_node, vars, const_func_name="app
                                     return flag, assign_stmt_lineno, assign_stmt, remove_ass_flag
                         except:
                             pass
-    
+            
+            # 防止嵌套循环误判：如果发现外层循环包裹了当前循环，则不进行重构
+            if isinstance(node, (ast.For, ast.While, ast.AsyncFor)) and \
+               hasattr(node, "lineno") and hasattr(node, "end_lineno") and \
+               for_node.lineno > node.lineno > assign_stmt.lineno and node.end_lineno >= for_node.end_lineno:
+                return 1, assign_stmt_lineno, assign_stmt, remove_ass_flag
+    else:
+        return 1, assign_stmt_lineno, assign_stmt, remove_ass_flag
+        
     return flag, assign_stmt_lineno, assign_stmt, remove_ass_flag
 
 def get_complicated_for_comprehen_code_list(tree, const_empty_list=["[]"], const_func_name="append"):

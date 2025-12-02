@@ -5,16 +5,12 @@ import sys, ast, copy, os
 # ==========================================
 # 获取当前文件的绝对路径
 current_file_path = os.path.abspath(__file__)
-# 获取项目根目录 (RefactoringIdioms 的父目录)
-# transform_c_s -> RefactoringIdioms -> Root
 project_root = os.path.dirname(os.path.dirname(os.path.dirname(current_file_path)))
 if project_root not in sys.path:
     sys.path.append(project_root)
 
-try:
-    from RefactoringIdioms import util
-except ImportError:
-    import util
+from RefactoringIdioms import util
+
 
 def copy_compre(node):
     compr = ast.comprehension()

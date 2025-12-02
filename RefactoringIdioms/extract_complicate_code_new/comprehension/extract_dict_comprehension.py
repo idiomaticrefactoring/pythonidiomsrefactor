@@ -9,7 +9,7 @@ if project_root not in sys.path:
     sys.path.append(project_root)
 
 from RefactoringIdioms.extract_simp_cmpl_data import ast_util
-from RefactoringIdioms.extract_transform_complicate_code_new.comprehension import comprehension_utils
+from RefactoringIdioms.extract_complicate_code_new.comprehension import comprehension_utils
 from RefactoringIdioms.transform_c_s import transform_dict_comp
 
 
