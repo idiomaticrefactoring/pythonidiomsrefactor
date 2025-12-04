@@ -5,7 +5,7 @@ import os
 # 将当前文件的上两级目录加入 path (即项目根目录)
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-#from RefactoringIdioms import main
+from RefactoringIdioms import main
 
 def run_main():
     """

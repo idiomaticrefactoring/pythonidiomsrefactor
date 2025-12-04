@@ -9,11 +9,9 @@ from io import BytesIO
 # 路径修复
 # ==========================================
 current_file_path = os.path.abspath(__file__)
-# extract_transform... -> RefactoringIdioms -> Root
 project_root = os.path.dirname(os.path.dirname(os.path.dirname(current_file_path)))
 if project_root not in sys.path:
     sys.path.append(project_root)
-
 from RefactoringIdioms.extract_simp_cmpl_data import ast_util
 from RefactoringIdioms.transform_c_s import transform_multiple_assign
 
@@ -22,7 +20,7 @@ input: 代码片段 code1
 '''
 def get_tokens(node):
     s = ast.unparse(node)
-    g = tokenize.tokenize(BytesIO(s.encode('utf-8')).readline)  # tokenize the string
+    g = tokenize.tokenize(BytesIO(s.encode('utf-8')).readline)  
     tokens=set([])
     for toknum, child, _, _, _ in g:
         tokens.add(child)
@@ -376,3 +374,4 @@ def main():
     c = 3
 """
     print(transform_multiple_assign_code(code))
+    print(transform_multiple_assign_code(code,config={"max-assignments-to-refactor" : 2}))

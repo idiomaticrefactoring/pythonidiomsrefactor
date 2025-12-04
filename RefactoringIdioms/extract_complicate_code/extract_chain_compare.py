@@ -260,8 +260,10 @@ def get_chain_compare(content, config=None):
 
 if __name__ == '__main__':
     # 简单测试
-    code = "if a < b and b < c: pass"
+    code = "if a < b and b < c and d > c: pass"
     print(get_chain_compare(code))
+    print(get_chain_compare(code,config={"max-operands-to-refactor":2}))
+    print(get_chain_compare(code,config={"max-operands-to-refactor":4}))
 
 
 

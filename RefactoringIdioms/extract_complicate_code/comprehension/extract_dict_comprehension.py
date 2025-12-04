@@ -69,16 +69,30 @@ def get_dict_compreh(content, config=None):
 
 if __name__ == '__main__':
     code = '''
-def test():
-    d = {}
-    f = {}
-    for i in range(10):
-        if i > 5:
-            d[i] = i * 2
-    
-    for j in range(5):
-        f[j] = j + 3
-    '''
+def func_1():
+    components = {}
+    for i in range(2):
+        print(1)
+    components['trend'] = get_forecast_component_plotly_props(
+        m, fcst, 'trend', uncertainty, plot_cap)
+    if m.train_holiday_names is not None and 'holidays' in fcst:
+        components['holidays'] = get_forecast_component_plotly_props(
+            m, fcst, 'holidays', uncertainty)
+
+    regressors = {'additive': False, 'multiplicative': False}
+    for name, props in m.extra_regressors.items():
+        regressors[props['mode']] = True
+    for mode in ['additive', 'multiplicative']:
+        if regressors[mode] and 'extra_regressors_{}'.format(mode) in fcst:
+            components['extra_regressors_{}'.format(mode)] = get_forecast_component_plotly_props(
+                m, fcst, 'extra_regressors_{}'.format(mode))
+    payload={}
+    a={}
+    for field in model.__searchable__:
+        for i in range(1):
+            payload[field] = getattr(model, field)
+'''
+
     print("Testing with default config (should detect):")
     results1 = get_dict_compreh(code)
     

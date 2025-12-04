@@ -224,4 +224,6 @@ def transform_star_call_code(content, config=None):
 if __name__ == '__main__':
     # 简单测试
     code = "func(a[i], a[i+1], a[i+2])"
-    print(transform_star_call_code(code, config={"max-elements-to-unpack": 3})) 
+    print(transform_star_call_code(code)) 
+    print(transform_star_call_code(code, config={"max-elements-to-unpack": 2}))
+    print(transform_star_call_code(code, config={"max-elements-to-unpack": 3}))  

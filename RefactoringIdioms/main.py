@@ -17,7 +17,7 @@ import RefactoringIdioms.util as util
 import RefactoringIdioms.CodeInfo as CodeInfo
 # 导入具体的重构逻辑模块
 from RefactoringIdioms.extract_complicate_code import (
-    extract_assign_multiple_assign as assign_multi_mod,
+    extract_assign_multiple as assign_multi_mod,
     extract_chain_compare as chain_compare_mod,
     extract_for_else as for_else_mod,
     extract_for_multiple_target as for_multi_target_mod,

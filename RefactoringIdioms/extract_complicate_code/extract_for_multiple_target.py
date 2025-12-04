@@ -212,8 +212,10 @@ if __name__ == '__main__':
     code = '''
 for T in a:
     c = 1
-    e = T[0] + T[1]
+    e = T[0] + T[1] + T[2]
     '''
+    print(transform_for_multiple_targets_code(code))
     print(transform_for_multiple_targets_code(code,config={"max-elements-to-unpack": 2}))
+    print(transform_for_multiple_targets_code(code,config={"max-elements-to-unpack": 3}))
 
 
