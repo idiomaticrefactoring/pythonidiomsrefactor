@@ -96,7 +96,7 @@ refactor-with-if = true
 [ridiom.rules.chain-comparison]
 # 重构限制的最多*操作数*数量。
 # 设为 false 意味着此规则默认*禁用*，
-max-operands-to-refactor = 3
+max-operands-to-refactor = false
 
 [ridiom.rules.assign-multiple-targets]
 # 重构限制的最多*赋值*数量。
