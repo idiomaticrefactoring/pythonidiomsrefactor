@@ -27,7 +27,6 @@ exclude = [
 enable-noqa = true
 
 
-
 # ===============================================
 # 2. 核心转换配置 (Core Transformation)
 # ===============================================
@@ -39,23 +38,6 @@ enable-noqa = true
 # "explain" = (Deldiom 模式)
 #   反向转换：检测“地道”代码，并将其转换为“非地道”代码以供解释。
 mode = "refactor" # 默认保持为 RIdiom 模式
-
-# mode = "refactor", fix = false:
-#   (默认) 只检测并报告“非地道”代码。
-#
-# mode = "refactor", fix = true:
-#   自动将“非地道”代码 *重构* 为“地道”代码。
-#
-# mode = "explain", fix = false:
-#   (默认) 只检测并报告“地道”代码 (以及它对应的非地道解释)。
-#
-# mode = "explain", fix = true:
-#   自动将“地道”代码 *反向重构* 为“非地道”代码。
-fix = false
-
-# 是否执行有风险的转换 (主要适用于 "refactor" 模式)。
-unsafe-fixes = false
-
 
 
 # ===============================================
@@ -118,14 +100,5 @@ max-elements-to-unpack = false
 # 4. 输出配置 (Output Configuration)
 # ===============================================
 [ridiom.output]
-# 指定报告的格式:
-# "stdout" (直接打印到控制台)
-# "json"   (生成 JSON 文件，对应原 --outputpath)
-# "diff"   (只显示差异，不修改文件)
-format = "stout"
-
-# 指定输出文件的路径 (仅在 format = "json" 时生效)。
-file = "ridiom-report.json"
-
-# 控制台输出的详细程度: 0=安静, 1=默认, 2=详细
-verbosity = 1
+# 指定输出文件的路径 
+file = "report.json"
